@@ -9,6 +9,7 @@
 char msg[50];                      // Message to the topic
 long lastReconnectMQTTAttempt = 0; // Time of the last MQTT connection attempt
 long lastLedSwitch = 0;            // Time of the last OnBoard LED swithed
+int led_analog_state = 0;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -115,6 +116,18 @@ void setup() {
   connectMQTT();
 }
 
+void led(int now) {
+  if (now - lastLedSwitch > 10) {
+    lastLedSwitch = now;
+    if (led_analog_state < 1023) {
+      led_analog_state += 10;
+    } else {
+      led_analog_state = 0;
+    }
+    analogWrite(LED_BUILTIN, led_analog_state);
+  }
+}
+
 // the loop function runs over and over again forever
 void loop() {
   long now = millis();
@@ -131,16 +144,5 @@ void loop() {
   }
 
   // I am alive :)
-  if (now - lastLedSwitch > 500) {
-    lastLedSwitch = now;
-    if (led_state == HIGH) {
-      digitalWrite(LED_BUILTIN, LOW);
-      led_state = LOW;
-    } else {
-      digitalWrite(LED_BUILTIN, HIGH);
-      led_state = HIGH;
-    }
-  }
-  
-  delay(500);
+  led(now);
 }
